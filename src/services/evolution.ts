@@ -13,9 +13,9 @@ async function evolutionFetch<T>(
   const response = await fetch(url, {
     ...options,
     headers: {
+      ...options.headers,
       "Content-Type": "application/json",
       apikey: API_KEY,
-      ...options.headers,
     },
   });
 
