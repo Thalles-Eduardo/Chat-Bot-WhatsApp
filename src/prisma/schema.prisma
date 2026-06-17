@@ -1,0 +1,220 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ── Enums ─────────────────────────────────────────
+
+enum UserRole {
+  OWNER
+  ADMIN
+  OPERATOR
+}
+
+enum InstanceStatus {
+  DISCONNECTED
+  CONNECTING
+  CONNECTED
+}
+
+enum ConversationStatus {
+  PENDING
+  AI_HANDLING
+  HUMAN_HANDLING
+  CLOSED
+}
+
+enum MessageSender {
+  CONTACT
+  AI
+  OPERATOR
+  SYSTEM
+}
+
+enum MessageType {
+  TEXT
+  AUDIO
+  IMAGE
+  VIDEO
+  DOCUMENT
+}
+
+enum SubscriptionPlan {
+  FREE
+  STARTER
+  PRO
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  TRIAL
+}
+
+// ── Models ────────────────────────────────────────
+
+model Company {
+  id        String    @id @default(uuid())
+  name      String
+  slug      String    @unique
+  email     String
+  phone     String?
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  users             User[]
+  whatsappInstances WhatsappInstance[]
+  agents            Agent[]
+  prompts           Prompt[]
+  conversations     Conversation[]
+  messages          Message[]
+  subscription      Subscription?
+
+  @@map("companies")
+}
+
+model User {
+  id           String    @id @default(uuid())
+  companyId    String
+  name         String
+  email        String    @unique
+  passwordHash String
+  role         UserRole
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  company       Company        @relation(fields: [companyId], references: [id])
+  conversations Conversation[]
+
+  @@index([companyId])
+  @@map("users")
+}
+
+model WhatsappInstance {
+  id           String         @id @default(uuid())
+  companyId    String
+  name         String
+  instanceName String
+  status       InstanceStatus @default(DISCONNECTED)
+  phone        String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  company       Company        @relation(fields: [companyId], references: [id])
+  conversations Conversation[]
+
+  @@unique([companyId, instanceName])
+  @@map("whatsapp_instances")
+}
+
+model Agent {
+  id           String   @id @default(uuid())
+  companyId    String
+  name         String
+  description  String?
+  isActive     Boolean  @default(true)
+  systemPrompt String   @db.Text
+  model        String   @default("gpt-4o-mini")
+  temperature  Float    @default(0.7)
+  maxTokens    Int      @default(1000)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  company       Company        @relation(fields: [companyId], references: [id])
+  prompts       Prompt[]
+  conversations Conversation[]
+
+  @@index([companyId])
+  @@map("agents")
+}
+
+model Prompt {
+  id        String   @id @default(uuid())
+  companyId String
+  agentId   String?
+  title     String
+  content   String   @db.Text
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id])
+  agent   Agent?  @relation(fields: [agentId], references: [id])
+
+  @@index([companyId])
+  @@index([agentId])
+  @@map("prompts")
+}
+
+model Conversation {
+  id                 String             @id @default(uuid())
+  companyId          String
+  whatsappInstanceId String
+  agentId            String?
+  operatorId         String?
+  contactName        String
+  contactPhone       String
+  status             ConversationStatus @default(PENDING)
+  lastMessageAt      DateTime?
+  closedAt           DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  company          Company          @relation(fields: [companyId], references: [id])
+  whatsappInstance WhatsappInstance @relation(fields: [whatsappInstanceId], references: [id])
+  agent            Agent?           @relation(fields: [agentId], references: [id])
+  operator         User?            @relation(fields: [operatorId], references: [id])
+  messages         Message[]
+
+  @@index([companyId, contactPhone])
+  @@index([status])
+  @@index([lastMessageAt])
+  @@map("conversations")
+}
+
+model Message {
+  id                String        @id @default(uuid())
+  conversationId    String
+  companyId         String
+  sender            MessageSender
+  type              MessageType   @default(TEXT)
+  content           String        @db.Text
+  mediaUrl          String?
+  whatsappMessageId String?
+  isRead            Boolean       @default(false)
+  createdAt         DateTime      @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+  company      Company      @relation(fields: [companyId], references: [id])
+
+  @@index([conversationId, createdAt])
+  @@index([companyId])
+  @@map("messages")
+}
+
+model Subscription {
+  id                  String             @id @default(uuid())
+  companyId           String             @unique
+  plan                SubscriptionPlan   @default(FREE)
+  status              SubscriptionStatus @default(ACTIVE)
+  maxInstances        Int                @default(1)
+  maxAgents           Int                @default(1)
+  maxMessagesPerMonth Int                @default(1000)
+  currentPeriodStart  DateTime           @default(now())
+  currentPeriodEnd    DateTime
+  externalId          String?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@map("subscriptions")
+}
