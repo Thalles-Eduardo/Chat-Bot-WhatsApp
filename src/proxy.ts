@@ -5,6 +5,7 @@ import {
   ACCESS_TOKEN_COOKIE,
   PUBLIC_ROUTES,
   AUTH_API_PREFIX,
+  WEBHOOKS_API_PREFIX,
 } from "@/lib/auth/constants";
 
 function getAccessSecret(): Uint8Array {
@@ -25,6 +26,10 @@ export async function proxy(request: NextRequest) {
   }
 
   if (pathname.startsWith(AUTH_API_PREFIX)) {
+    return NextResponse.next();
+  }
+
+  if (pathname.startsWith(WEBHOOKS_API_PREFIX)) {
     return NextResponse.next();
   }
 

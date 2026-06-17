@@ -15,3 +15,4 @@ export const ROLE_HIERARCHY: Record<string, number> = {
 
 export const PUBLIC_ROUTES = ["/", "/login", "/register"];
 export const AUTH_API_PREFIX = "/api/auth";
+export const WEBHOOKS_API_PREFIX = "/api/webhooks";
