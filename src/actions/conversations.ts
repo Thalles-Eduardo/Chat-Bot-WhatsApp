@@ -102,7 +102,7 @@ export async function sendMessage(
     lastMessageAt: new Date(),
   };
   if (conversation.status === "PENDING") {
-    updates.status = "IN_PROGRESS";
+    updates.status = "HUMAN_HANDLING";
   }
   if (!conversation.operatorId) {
     updates.operatorId = user.userId;
@@ -130,7 +130,7 @@ export async function updateConversationStatus(
     return { success: false, error: "Conversa nao encontrada" };
   }
 
-  const validStatuses = ["PENDING", "IN_PROGRESS", "CLOSED"];
+  const validStatuses = ["PENDING", "AI_HANDLING", "HUMAN_HANDLING", "CLOSED"];
   if (!validStatuses.includes(status)) {
     return { success: false, error: "Status invalido" };
   }

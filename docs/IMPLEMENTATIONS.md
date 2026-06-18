@@ -104,7 +104,37 @@ Documentacao de todos os arquivos implementados no projeto, organizados por fase
 | `src/components/sections/chat-view.tsx` | Painel de chat: header com nome/telefone/status/acoes, area de mensagens com scroll e polling 3s, ChatInput na base. Desabilita input quando conversa fechada. |
 | `src/components/sections/message-bubble.tsx` | Bolha de mensagem: CONTACT (esquerda, bg-muted), OPERATOR (direita, bg-primary), AI (direita, bg-primary/80 com icone bot), SYSTEM (centralizado, texto menor). Horario HH:mm. |
 | `src/components/sections/chat-input.tsx` | Input de mensagem: textarea com auto-resize (max 120px), Enter para enviar, Shift+Enter para nova linha, botao Send, integra com sendMessage action. |
-| `src/components/sections/conversation-status-actions.tsx` | Dropdown no header do chat: "Iniciar atendimento" (PENDING→IN_PROGRESS), "Fechar conversa" (→CLOSED), "Reabrir" (CLOSED→PENDING). |
+| `src/components/sections/conversation-status-actions.tsx` | Dropdown no header do chat: "Iniciar atendimento" (PENDING/AI_HANDLING→HUMAN_HANDLING), "Fechar conversa" (→CLOSED), "Reabrir" (CLOSED→PENDING). |
+
+---
+
+## Fase 6 — IA / RAG
+
+| Arquivo | Descricao |
+|---------|-----------|
+| `src/services/ai.ts` | Servico de IA: compoe system prompt (agent config + prompts ativos), busca historico de conversa, chama Claude API (`@anthropic-ai/sdk`), salva resposta como Message (sender: AI), envia via Evolution API. Suporte a adaptive thinking para modelos compativeis. |
+| `src/validators/agents.ts` | Schemas Zod para validacao de agentes (nome, systemPrompt, model, temperature, maxTokens) e prompts (titulo, conteudo, agentId opcional). |
+| `src/actions/agents.ts` | Server Actions CRUD para agentes: getAgents, getAgent, getActiveAgents, createAgent (com limite de subscription), updateAgent, toggleAgent, deleteAgent. Requer role ADMIN para escrita. |
+| `src/actions/prompts.ts` | Server Actions CRUD para prompts: getPrompts (com include do agente vinculado), createPrompt, updatePrompt, togglePrompt, deletePrompt. Prompts sem agentId sao globais. |
+| `src/app/(dashboard)/dashboard/agentes/page.tsx` | Pagina de listagem de agentes: Server Component com tabela (nome, modelo, conversas ativas, status ativo/inativo), botao "Novo agente". |
+| `src/components/sections/agent-form-dialog.tsx` | Dialog para criar/editar agente: campos nome, descricao, system prompt (textarea), modelo (select com Opus/Sonnet/Haiku), temperatura, max tokens. |
+| `src/components/sections/agent-actions.tsx` | Acoes por agente: botao editar (abre AgentFormDialog), toggle ativar/desativar, excluir. |
+| `src/app/(dashboard)/dashboard/prompts/page.tsx` | Pagina de listagem de prompts: Server Component com tabela (titulo, agente vinculado ou "Global", status), botao "Novo prompt". |
+| `src/components/sections/prompt-form-dialog.tsx` | Dialog para criar/editar prompt: campos titulo, conteudo (textarea), agente (select dinamico via getActiveAgents). Prompts sem agente = globais. |
+| `src/components/sections/prompt-actions.tsx` | Acoes por prompt: botao editar, toggle ativar/desativar, excluir. |
+
+### Arquivos Modificados na Fase 6
+
+| Arquivo | Mudanca |
+|---------|---------|
+| `src/prisma/schema.prisma` | Adicionado `defaultAgentId` ao WhatsappInstance com relacao `DefaultAgent`. Alterado default do campo `model` no Agent de `gpt-4o-mini` para `claude-opus-4-8`. Adicionada relacao inversa `defaultInstances` no Agent. |
+| `src/app/api/webhooks/evolution/route.ts` | Integrado `processMessageWithAI` no `handleMessageUpsert`. Apos salvar mensagem do contato, verifica se conversa tem agente ou instancia tem defaultAgent, e se nao ha operador humano. Se aplicavel, processa com IA e faz try/catch para nao bloquear o webhook em caso de erro. |
+| `src/components/layout/app-sidebar.tsx` | Adicionado item "Prompts" com icone FileText na navegacao, entre Agentes e Instancias. |
+| `src/actions/conversations.ts` | Corrigido status `IN_PROGRESS` para `HUMAN_HANDLING` (match com enum do schema). |
+| `src/components/sections/conversation-status-actions.tsx` | Corrigidas transicoes de status para usar `AI_HANDLING` e `HUMAN_HANDLING`. |
+| `src/components/sections/conversation-list.tsx` | Corrigidos filtros de status para incluir `AI_HANDLING` e `HUMAN_HANDLING`. |
+| `src/components/sections/chat-view.tsx` | Corrigido mapa de labels de status com `AI_HANDLING` ("IA respondendo") e `HUMAN_HANDLING` ("Em atendimento"). |
+| `src/components/sections/conversation-item.tsx` | Corrigido mapa de cores de status dot: `AI_HANDLING` (azul), `HUMAN_HANDLING` (verde). |
 
 ---
 
@@ -117,6 +147,8 @@ Documentacao de todos os arquivos implementados no projeto, organizados por fase
 | `/register` | Static | Pagina de registro |
 | `/dashboard` | Dynamic | Dashboard com cards de estatisticas |
 | `/dashboard/conversas` | Dynamic | Inbox de conversas WhatsApp |
+| `/dashboard/agentes` | Dynamic | Gerenciamento de agentes IA |
+| `/dashboard/prompts` | Dynamic | Gerenciamento de prompts / knowledge base |
 | `/dashboard/instancias` | Dynamic | Gerenciamento de instancias WhatsApp |
 | `/api/auth/refresh` | Dynamic | Renovacao de access token |
 | `/api/webhooks/evolution` | Dynamic | Webhook da Evolution API (publico) |
@@ -127,7 +159,6 @@ Documentacao de todos os arquivos implementados no projeto, organizados por fase
 
 | Fase | Descricao |
 |------|-----------|
-| Fase 6 | IA / RAG — Processamento de mensagens com IA, knowledge base |
 | Fase 7 | Filas / Redis — Processamento assincrono, rate limiting, real-time |
 | Fase 8 | SaaS Billing — Planos, pagamentos, limites |
 | Fase 9 | Analytics — Dashboard com metricas e graficos |

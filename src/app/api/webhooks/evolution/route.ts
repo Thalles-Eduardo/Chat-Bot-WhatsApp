@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { processMessageWithAI } from "@/services/ai";
 
 const STATUS_MAP: Record<string, "CONNECTED" | "DISCONNECTED" | "CONNECTING"> =
   {
@@ -25,6 +26,7 @@ export async function POST(request: NextRequest) {
 
   const whatsappInstance = await prisma.whatsappInstance.findFirst({
     where: { instanceName },
+    select: { id: true, companyId: true, defaultAgentId: true },
   });
 
   if (!whatsappInstance) {
@@ -51,7 +53,7 @@ async function handleMessageUpsert(
       pushName?: string;
     };
   },
-  whatsappInstance: { id: string; companyId: string }
+  whatsappInstance: { id: string; companyId: string; defaultAgentId: string | null }
 ) {
   const { key, message, pushName } = body.data;
 
@@ -82,6 +84,7 @@ async function handleMessageUpsert(
         contactName,
         contactPhone,
         status: "PENDING",
+        agentId: whatsappInstance.defaultAgentId,
       },
     });
   }
@@ -104,11 +107,28 @@ async function handleMessageUpsert(
       contactName,
     },
   });
+
+  const agentId = conversation.agentId || whatsappInstance.defaultAgentId;
+
+  if (agentId && !conversation.operatorId && conversation.status !== "CLOSED") {
+    if (!conversation.agentId && whatsappInstance.defaultAgentId) {
+      await prisma.conversation.update({
+        where: { id: conversation.id },
+        data: { agentId: whatsappInstance.defaultAgentId },
+      });
+    }
+
+    try {
+      await processMessageWithAI(conversation.id);
+    } catch (error) {
+      console.error("[AI Processing Error]", error);
+    }
+  }
 }
 
 async function handleConnectionUpdate(
   body: { data: { state: string } },
-  whatsappInstance: { id: string; instanceName?: string }
+  whatsappInstance: { id: string }
 ) {
   const { state } = body.data;
   const status = STATUS_MAP[state];

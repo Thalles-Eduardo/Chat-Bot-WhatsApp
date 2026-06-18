@@ -31,7 +31,8 @@ function formatRelativeTime(date: Date | null): string {
 
 const STATUS_DOT: Record<string, string> = {
   PENDING: "bg-yellow-500",
-  IN_PROGRESS: "bg-green-500",
+  AI_HANDLING: "bg-blue-500",
+  HUMAN_HANDLING: "bg-green-500",
   CLOSED: "bg-muted-foreground/50",
 };
 

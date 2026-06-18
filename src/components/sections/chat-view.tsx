@@ -11,7 +11,8 @@ import { getMessages } from "@/actions/conversations";
 
 const STATUS_LABELS: Record<string, { label: string; variant: "default" | "secondary" | "outline" }> = {
   PENDING: { label: "Pendente", variant: "secondary" },
-  IN_PROGRESS: { label: "Em atendimento", variant: "default" },
+  AI_HANDLING: { label: "IA respondendo", variant: "default" },
+  HUMAN_HANDLING: { label: "Em atendimento", variant: "default" },
   CLOSED: { label: "Fechada", variant: "outline" },
 };
 
