@@ -27,7 +27,7 @@ interface PromptData {
 interface PromptFormDialogProps {
   mode: "create" | "edit";
   prompt?: PromptData;
-  trigger?: React.ReactNode;
+  trigger?: React.ReactElement;
 }
 
 export function PromptFormDialog({

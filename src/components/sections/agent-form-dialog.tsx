@@ -35,7 +35,7 @@ interface AgentData {
 interface AgentFormDialogProps {
   mode: "create" | "edit";
   agent?: AgentData;
-  trigger?: React.ReactNode;
+  trigger?: React.ReactElement;
 }
 
 export function AgentFormDialog({ mode, agent, trigger }: AgentFormDialogProps) {
