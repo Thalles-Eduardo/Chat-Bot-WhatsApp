@@ -7,6 +7,7 @@ import {
   MessageSquare,
   Bot,
   Smartphone,
+  FileText,
   Settings,
   LogOut,
   ChevronsUpDown,
@@ -38,6 +39,7 @@ const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/conversas", label: "Conversas", icon: MessageSquare },
   { href: "/dashboard/agentes", label: "Agentes", icon: Bot },
+  { href: "/dashboard/prompts", label: "Prompts", icon: FileText },
   { href: "/dashboard/instancias", label: "Instancias", icon: Smartphone },
   { href: "/dashboard/configuracoes", label: "Configuracoes", icon: Settings },
 ];
