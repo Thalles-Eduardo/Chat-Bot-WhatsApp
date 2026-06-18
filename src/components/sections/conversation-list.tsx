@@ -12,7 +12,8 @@ import { getConversations } from "@/actions/conversations";
 const STATUS_FILTERS = [
   { value: "ALL", label: "Todas" },
   { value: "PENDING", label: "Pendentes" },
-  { value: "IN_PROGRESS", label: "Em atendimento" },
+  { value: "AI_HANDLING", label: "IA" },
+  { value: "HUMAN_HANDLING", label: "Atendimento" },
   { value: "CLOSED", label: "Fechadas" },
 ];
 

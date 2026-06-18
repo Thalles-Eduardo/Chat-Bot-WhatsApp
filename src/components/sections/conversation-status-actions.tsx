@@ -38,16 +38,16 @@ export function ConversationStatusActions({
         <MoreVertical className="size-4" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        {status === "PENDING" && (
+        {(status === "PENDING" || status === "AI_HANDLING") && (
           <DropdownMenuItem
-            onSelect={() => handleStatusChange("IN_PROGRESS")}
+            onSelect={() => handleStatusChange("HUMAN_HANDLING")}
             disabled={isPending}
           >
             <Play className="mr-2 size-4" />
             Iniciar atendimento
           </DropdownMenuItem>
         )}
-        {(status === "PENDING" || status === "IN_PROGRESS") && (
+        {(status === "PENDING" || status === "AI_HANDLING" || status === "HUMAN_HANDLING") && (
           <DropdownMenuItem
             onSelect={() => handleStatusChange("CLOSED")}
             disabled={isPending}
