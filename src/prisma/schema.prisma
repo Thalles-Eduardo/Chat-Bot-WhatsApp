@@ -99,16 +99,18 @@ model User {
 }
 
 model WhatsappInstance {
-  id           String         @id @default(uuid())
-  companyId    String
-  name         String
-  instanceName String
-  status       InstanceStatus @default(DISCONNECTED)
-  phone        String?
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  id             String         @id @default(uuid())
+  companyId      String
+  name           String
+  instanceName   String
+  status         InstanceStatus @default(DISCONNECTED)
+  phone          String?
+  defaultAgentId String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 
-  company       Company        @relation(fields: [companyId], references: [id])
+  company      Company        @relation(fields: [companyId], references: [id])
+  defaultAgent Agent?         @relation("DefaultAgent", fields: [defaultAgentId], references: [id])
   conversations Conversation[]
 
   @@unique([companyId, instanceName])
@@ -122,15 +124,16 @@ model Agent {
   description  String?
   isActive     Boolean  @default(true)
   systemPrompt String   @db.Text
-  model        String   @default("gpt-4o-mini")
+  model        String   @default("claude-opus-4-8")
   temperature  Float    @default(0.7)
   maxTokens    Int      @default(1000)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  company       Company        @relation(fields: [companyId], references: [id])
-  prompts       Prompt[]
-  conversations Conversation[]
+  company          Company            @relation(fields: [companyId], references: [id])
+  prompts          Prompt[]
+  conversations    Conversation[]
+  defaultInstances WhatsappInstance[] @relation("DefaultAgent")
 
   @@index([companyId])
   @@map("agents")
